@@ -1,0 +1,172 @@
+---
+title: "Interactive Visualization"
+author: "Hans"
+date: "2024-06-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(plotly)
+library(dplyr)
+library(leaflet)
+library(lubridate)
+```
+
+Read dataset
+```{r}
+unp <- read.csv("Dataset.csv",sep=";")
+```
+
+Cek missing value
+```{r}
+colSums(is.na(unp))
+```
+
+```{r}
+unp$Pengeluaran.per.kapita <- as.numeric(unp$Pengeluaran.per.kapita)
+```
+
+Univariate Numerical Variable (Persentase bekerja)
+```{r}
+unp$Bulan <- ifelse(unp$Bulan == "Februari", 2, 8)
+
+unp$Date = make_date(year = unp$Tahun, month = unp$Bulan, day = 1)
+
+plot_ly(data = unp,
+  x = ~Date, 
+  y = ~Persentase.Bekerja, 
+  type = 'scatter', 
+  mode = 'lines+markers'
+)%>%
+layout(
+  title = 'Persentase bekerja dari bulan Februari 2014 sampai Agustus 2023',
+  xaxis = list(title = 'Tahun'),
+  yaxis = list(title = 'Persentase bekerja (%)')
+)
+```
+Grafik di atas menunjukkan employment rate atau persentase orang bekerja dari Februari 2019 sampai Agustus 2023. Bisa dilihat bahwa terjadi penurunan di Agustus 2020 karena menyebarnya virus Covid-19 di Indonesia. Angka empolyment rate kembali meningkat hingga Agustus 2023, namun tidak mencapai puncaknya di Februari 2020.
+
+Univariate Numerical Variable (Jumlah orang bekerja)
+```{r}
+plot_ly(
+  data = unp,
+  x = ~Jumlah.Orang.Bekerja,
+  type = "histogram",
+  nbinsx =11
+)%>%
+layout(
+  title = 'Persebaran Jumlah Orang Bekerja',
+  xaxis = list(title = 'Jumlah Orang Bekerja'),
+  yaxis = list(title = 'Count')
+)
+```
+Histogram tersebut menunjukkan persebaran data orang bekerja. Persebarannya tidak normal karena nilai terbesar berada di bagian kiri dan bagian tengah memiliki nilai yang relatif kecil dibandingkan nilai lainnya.
+
+Univariate Categorical Variable (Gender)
+```{r}
+plot_ly(
+  data = unp,
+  x = ~Gender,
+  y = ~Jumlah.Penduduk..berdasarkan.gender.,
+  type = "bar"
+) %>%
+layout(
+  title = 'Rasio Gender',
+  xaxis = list(title = 'Gender'),
+  yaxis = list(title = 'Count')
+)
+```
+Bar plot di atas menjelaskan rasio dari jumlah laki-laki dan perempuan di Indonesia. Jumlah laki-laki di Indonesia lebih banyak dibandingkan perempuan.
+
+Univariate Numerical Variable (Pengeluaran per kapita)
+```{r}
+plot_ly(
+  data = unp,
+  x = ~(Pengeluaran.per.kapita),
+  type = "histogram",
+  nbinsx =12
+)%>%
+layout(
+  title = 'Persebaran Pengeluaran Per Kapita',
+  xaxis = list(title = 'Pengeluaran Per Kapita'),
+  yaxis = list(title = 'Count')
+)
+```
+Histogram di atas menjelaskan persebaran dari pengeluaran per kapita. Persebarannya sangatlah tidak normal karena condong ke kiri dan tidak ada nilai di tengah-tengahnya.
+
+Bivariate numerical numerical (BI rate dan Persentase Bekerja)
+```{r}
+plot_ly(
+  data = unp,
+  x = ~BI.Rate,
+  y = ~Persentase.Pengangguran,
+  type = "scatter",
+  mode = "markers"
+)%>%
+layout(
+  title = "Perbandingan suku bunga terhadap persentase pengangguran",
+  xaxis = list(title = "Suku bunga"),
+  yaxis = list(title ="Persentase pengangguran")
+)
+```
+Scatterplot di atas menjelaskan hubungan antara suku bunga yang ditetapkan oleh Bank Indonesia dan persentase orang yang bekerja. Dari data di atas, bisa disimpulkan bahwa suku bunga tidak begitu mempengaruhi persentase bekerja karena ada faktor yang lebih besar yaitu Covid-19.
+
+Bivariate categorical numerical (Pengeluaran per kapita dan gender)
+```{r}
+plot_ly(
+  data = unp,
+  x = ~Gender, 
+  y = ~(Pengeluaran.per.kapita), 
+  type = 'bar', 
+  color = ~Gender
+) %>%
+layout(
+  title = 'Perbandingan Pengeluaran Per Kapita terhadap Gender',
+  xaxis = list(title = 'Gender'),
+  yaxis = list(title = 'Pengeluaran Per Kapita')
+)
+```
+Barplot di atas menunjukkan perbandingan antara pengeluaran per kapita laki-laki dan perempuan. Laki-laki memiliki pengeluaran per kapita yang jauh lebih banyak daripada perempuan.
+
+Bivariate numerical numerical (Jumlah orang pengangguran dan jumlah orang bekerja)
+```{r}
+plot_ly(data = unp, 
+  x = ~Date, 
+  y = ~Jumlah.Orang.Bekerja, 
+  name = 'Bekerja', 
+  type = 'scatter', 
+  mode = 'lines+markers'
+) %>% 
+add_trace(y = ~Jumlah.Orang.Pengangguran, 
+  name = 'Pengangguran', 
+  mode = 'lines+markers'
+) %>% 
+layout(title = 'Perbandingan jumlah orang bekerja dan pengangguran dari Februari 2019 sampai Agustus 2023',
+  xaxis = list(title = 'Tahun'),
+  yaxis = list(title = 'Jumlah orang'),
+  legend = list(x = 0.1, y = 0.8)
+)
+```
+Plot di atas membandingkan jumlah orang yang bekerja dan pengangguran tiap tahunnya. Tentunya jumlah orang yang bekerja jauh lebih banyak dibandingkan pengangguran dan bila jumlah orang pengangguran meningkat, jumlah orang bekerja menurun.
+
+Multivariate numerical numerical categorical (Persentase bekerja, pengeluaran per kapita dan gender)
+```{r}
+plot_ly(
+  data = unp,
+  x = ~Persentase.Bekerja,
+  y = ~(Pengeluaran.per.kapita),
+  type = "scatter",
+  mode = "markers",
+  color = ~Gender
+) %>%
+layout(
+  title = 'Perbandingan Persentase Bekerja terhadap Pengeluaran Per Kapita dan Gender',
+  xaxis = list(title = 'Persentase Bekerja'),
+  yaxis = list(title = 'Pengeluaran Per Kapita')
+)
+```
+Scatterplot ini menjelaskan perbandingan pengeluaran per kapita dan persentase bekerja yang dipisahkan oleh gender. Persentase bekerja tidak dipengaruhi oleh pengeluaran per kapita karena ada masa di mana pengeluaran per kapita lebih sedikit namun persentase bekerja lebih tinggi dan sebaliknya.
